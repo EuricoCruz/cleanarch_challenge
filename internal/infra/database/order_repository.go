@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/EuricoCruz/cleanarch_challenge/internal/entity"
 )
@@ -35,12 +36,13 @@ func (r *OrderRepository) GetTotal() (int, error) {
 	return total, nil
 }
 
-func (r *OrderRepository) List(limit string, offset string) ([]*entity.Order, error) {
+func (r *OrderRepository) List(limit int, offset int) ([]*entity.Order, error) {
 	query := "Select * from orders LIMIT ? OFFSET ?"
 	rows, err := r.Db.Query(query, limit, offset); if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+	defer fmt.Println("conexão fechada")
 
 	var orders []*entity.Order
 
@@ -52,6 +54,7 @@ func (r *OrderRepository) List(limit string, offset string) ([]*entity.Order, er
 		}
 		orders = append(orders, order)
 	}
+	fmt.Println("Retornando os dados")
 
 	if err := rows.Err(); err != nil {
 		return nil, err

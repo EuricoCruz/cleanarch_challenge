@@ -11,7 +11,6 @@ import (
 	// mysql
 	_ "github.com/go-sql-driver/mysql"
 )
-
 func main() {
 	configs, err := configs.LoadConfig("./"); if err != nil {
 		panic(err)

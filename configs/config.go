@@ -13,7 +13,6 @@ type conf struct {
 	GRPCServerPort    string `mapstructure:"GRPC_SERVER_PORT"`
 	GraphQLServerPort string `mapstructure:"GRAPHQL_SERVER_PORT"`
 }
-
 func LoadConfig(path string) (*conf, error) {
 	var cfg *conf
 	viper.SetConfigName("app_config")
