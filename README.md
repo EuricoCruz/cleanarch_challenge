@@ -39,3 +39,37 @@ go mod tidy
 cd cmd/ordersystem 
 go run main.go wire_gen.go 
 ```
+
+# 5. Usando a aplicação
+
+- 5.1 Criar pedido via API REST
+```bash
+curl --location --request POST 'localhost:8080/orders' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "id":"bcde",
+    "price": 100.5,
+    "tax": 0.5
+}'
+```
+
+- 5.2 Listar pedidos via API REST
+```bash
+curl --location --request GET 'localhost:8080/orders'
+``` 
+
+ou 
+
+```bash
+curl --location --request GET 'localhost:8080/orders?offsset=0&limit=20'
+```
+
+- 5.3 Criar pedido via gRPC
+```bash
+grpcurl -plaintext -d '{"id":"bcdx-e4fa","price":100.5,"tax":0.5}' localhost:50051 pb.OrderService/CreateOrder
+``` 
+
+- 5.4 Listar pedidos via gRPC
+```bash
+grpcurl -plaintext -d '{"offset":0,"limit":20}' localhost:50051 pb.OrderService/ListOrders
+``` 
