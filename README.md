@@ -73,3 +73,17 @@ grpcurl -plaintext -d '{"id":"bcdx-e4fa","price":100.5,"tax":0.5}' localhost:500
 ```bash
 grpcurl -plaintext -d '{"offset":0,"limit":20}' localhost:50051 pb.OrderService/ListOrders
 ``` 
+
+- 5.5 Criar pedido via GraphQL
+```bash
+curl --location 'localhost:8080/query' \
+--header 'Content-Type: application/json' \
+--data '{"query":"mutation {\n  createOrder(input: {id: \"bcde-1234\", Price: 103.5, Tax: 0.5}) {\n    id\n    Price\n    Tax\n    FinalPrice\n  }\n}\n"}'
+``` 
+
+- 5.6 Listar pedidos via GraphQL
+```bash
+curl --location 'localhost:8080/query' \
+--header 'Content-Type: application/json' \
+--data '{"query":"query {\n  listOrders(input: {offset: \"0\", limit: \"20\"}) {\n    id\n    Price\n    Tax\n    FinalPrice\n  }\n}\n"}'
+``` 
