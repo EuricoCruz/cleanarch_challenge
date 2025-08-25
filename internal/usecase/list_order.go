@@ -7,11 +7,6 @@ type ListOrderInputDTO struct {
 	Offset int `json:"offset"`
 }
 
-const (
-	DefaultLimit  = 50
-	DefaultOffset = 0
-)
-
 type ListOrderOutputDTO struct {
 	Orders []*entity.Order
 }
@@ -29,14 +24,8 @@ func NewListOrderUseCase(
 }
 
 func (l *ListOrderUseCase) Execute(input ListOrderInputDTO) (ListOrderOutputDTO, error) {
-	if input.Limit <= 0 {
-		input.Limit = DefaultLimit
-	}
-	if input.Offset < 0 {
-		input.Offset = DefaultOffset
-	}
 	var Orders ListOrderOutputDTO
-	orderList, err := l.OrderRepository.List(input.Offset, input.Limit)
+	orderList, err := l.OrderRepository.List(input.Limit, input.Offset)
 	if err != nil {
 		return Orders, err
 	}

@@ -37,6 +37,7 @@ func (r *OrderRepository) GetTotal() (int, error) {
 }
 
 func (r *OrderRepository) List(limit int, offset int) ([]*entity.Order, error) {
+	fmt.Printf("Listando pedidos com limit %d e offset %d\n", limit, offset)
 	query := "Select * from orders LIMIT ? OFFSET ?"
 	rows, err := r.Db.Query(query, limit, offset); if err != nil {
 		return nil, err
