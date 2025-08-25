@@ -6,8 +6,11 @@ import (
 	"net"
 	"net/http"
 
+	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/EuricoCruz/cleanarch_challenge/configs"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/event/handler"
+	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/graph"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/grpc/pb"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/grpc/service"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/web/webserver"
@@ -19,8 +22,10 @@ import (
 	// mysql
 	_ "github.com/go-sql-driver/mysql"
 )
+
 func main() {
-	configs, err := configs.LoadConfig("."); if err != nil {
+	configs, err := configs.LoadConfig(".")
+	if err != nil {
 		panic(err)
 	}
 
@@ -35,7 +40,7 @@ func main() {
 	eventDispatcher.Register("OrderCreated", &handler.OrderCreatedHandler{
 		RabbitMQChannel: rabbitMQChannel,
 	})
-	
+
 	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
 	listOrderUseCase := NewListOrderUseCase(db)
 
@@ -62,14 +67,22 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Servidor gRPC rodando na porta", configs.GRPCServerPort)
-	if err := grpcServer.Serve(lis); err != nil {
-		panic(err)
-	}
-	grpcServer.Serve(lis)
+	go func() {
+		fmt.Println("Servidor gRPC rodando na porta", configs.GRPCServerPort)
+		if err := grpcServer.Serve(lis); err != nil {
+			panic(err)
+		}
+	}()
 
+	srv := graphql_handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+		CreateOrderUseCase: *createOrderUseCase,
+		ListOrderUseCase:   *listOrderUseCase,
+	}}))
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", srv)
 
-
+	fmt.Println("Starting GraphQL server on port", configs.GraphQLServerPort)
+	http.ListenAndServe(":"+configs.GraphQLServerPort, nil)
 
 }
 
