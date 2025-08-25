@@ -3,13 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/EuricoCruz/cleanarch_challenge/configs"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/event/handler"
+	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/grpc/pb"
+	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/grpc/service"
 	"github.com/EuricoCruz/cleanarch_challenge/internal/infra/web/webserver"
 	"github.com/EuricoCruz/cleanarch_challenge/pkg/events"
 	"github.com/streadway/amqp"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	// mysql
 	_ "github.com/go-sql-driver/mysql"
@@ -30,6 +35,9 @@ func main() {
 	eventDispatcher.Register("OrderCreated", &handler.OrderCreatedHandler{
 		RabbitMQChannel: rabbitMQChannel,
 	})
+	
+	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	listOrderUseCase := NewListOrderUseCase(db)
 
 	webserver := webserver.NewWebServer(configs.WebServerPort)
 	webOrderHandler := NewWebOrderHandler(db, eventDispatcher)
@@ -40,8 +48,28 @@ func main() {
 		fmt.Println("Requisição recebida na raiz /")
 		w.Write([]byte("Olá, mundo!"))
 	})
-	webserver.Start()
+	go webserver.Start()
 	fmt.Println("servidor rodando na porta: " + configs.WebServerPort)
+
+	grpcServer := grpc.NewServer()
+	orderService := service.NewOrderService(*createOrderUseCase, *listOrderUseCase)
+	pb.RegisterOrderServiceServer(grpcServer, orderService)
+	reflection.Register(grpcServer)
+
+	fmt.Println("Starting gRPC server on port", configs.GRPCServerPort)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", configs.GRPCServerPort))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Servidor gRPC rodando na porta", configs.GRPCServerPort)
+	if err := grpcServer.Serve(lis); err != nil {
+		panic(err)
+	}
+	grpcServer.Serve(lis)
+
+
+
 
 }
 
